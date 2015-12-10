@@ -1,8 +1,10 @@
 # cardboard
 
 ### demo:
-http://yohacker.github.io/cardboard/index.html
+* http://yohacker.github.io/cardboard/index.html
 
 ### Tech
 * [three.js] - awesome javascript 3D library
 
+### Reference
+* https://vr.chromeexperiments.com/
