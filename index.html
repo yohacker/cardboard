@@ -293,6 +293,7 @@
   var currentFocusObj = null;
   var focusCounter = 0;
   var isPreviewShown = false;
+  var autoCloseTimer;
   function setFocus(obj) {
       
       if(isPreviewShown === true) {
@@ -312,11 +313,11 @@
           $(".previewImg").css("backgroundImage", "url("+obj.imageUrl+")");
           $(".previewImg").fadeIn();
           isPreviewShown = true;
-//          setTimeout(function(){
-//              if (isPreviewShown) {
-//                  resetFocusCount();
-//              }
-//          }, 3000);
+          autoCloseTimer = setTimeout(function(){
+              if (isPreviewShown) {
+                  resetFocusCount();
+              }
+          }, 3000);
       }
   }
 
@@ -326,6 +327,7 @@
       currentFocusObj = null;
       $(".previewImg").fadeOut();
       isPreviewShown = false;
+      autoCloseTimer = null;
       $("#mask .timerVal").text("");
   }
 
