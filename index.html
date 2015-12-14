@@ -1,151 +1,383 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>Cardboard Example</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <style>
-      body {
-        margin: 0px;
-        overflow: hidden;
-      }
-      #example {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="example"></div>
+<head>
+  <title>Cardboard Example</title>
 
-  <script src="js/third-party/threejs/three.js"></script>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <style>
+  body {
+    margin: 0px;
+    overflow: hidden;
+  }
+  #example {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+      
+   #mask .col {
+       position: relative;
+       width:50%; height: 100%;  display: inline-block white-space: normal;
+
+   }
+
+  #mask .timerVal {
+     position: absolute;
+      top: 5px;
+      left: 12px;
+  }
+      
+  #mask .previewImg{
+     display: hidden;
+     background-size:contain;
+     background-repeat: no-repeat;
+     background-position: 50%;
+     /*background-image: url(demoImgs/04.jpg);*/
+  }
+  </style>
+</head>
+<body>
+
+  <div id="example"></div>
+  <div id="mask" style=" position: absolute; top:0px; left:0px; white-space: nowrap; ">
+      <div class="col">
+           <span class="ind" style="color: white; position: absolute; left:50%;">
+              <img src="textures/cborder.png"> 
+              <span class="timerVal"></span>
+
+          </span>
+          <div class="previewImg" style="position: absolute; left:0%;"></div>
+      </div>
+      <div class="col">
+          <span class="ind" style="color: white; position: absolute; left:150%;">
+              <img src="textures/cborder.png">
+              <span class="timerVal"> </span>
+
+          </span>
+          <div class="previewImg" style="position: absolute; left:100%;" ></div>
+      </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.js"></script>
   <script src="js/third-party/threejs/StereoEffect.js"></script>
   <script src="js/third-party/threejs/DeviceOrientationControls.js"></script>
   <script src="js/third-party/threejs/OrbitControls.js"></script>
 
   <script>
-    var camera, scene, renderer;
-    var effect, controls;
-    var element, container;
+  $("#mask").width(window.innerWidth);
+  $("#mask .ind").css("top", window.innerHeight/2);
+  $(".previewImg").width(window.innerWidth/2).height(window.innerHeight);
 
-    var clock = new THREE.Clock();
+  var imageAry = ["demoImgs/01.jpg", "demoImgs/02.jpg", "demoImgs/03.jpg", "demoImgs/04.jpg", "demoImgs/05.jpg",
+      "demoImgs/06.jpg", "demoImgs/07.jpg", "demoImgs/08.jpg", "demoImgs/09.jpg", "demoImgs/10.jpg"
+  ];
 
-    init();
-    animate();
+  var DEBUG = false;
+      var camera, scene, renderer;
+      var effect, controls;
+      var element, container;
+      var viewCenter = new THREE.Vector2();
+      var raycaster;
+      var planes;
+  var utils = {
+          v: function (x, y, z) {
+              return new THREE.Vector3(x, y, z);
+          },
 
-    function init() {
-      renderer = new THREE.WebGLRenderer();
-      element = renderer.domElement;
-      container = document.getElementById('example');
-      container.appendChild(element);
+          createAxis: function (p1, p2, color) {
+              var line, lineGeometry = new THREE.Geometry(), lineMat = new THREE.LineBasicMaterial({
+                  color: color,
+                  lineWidth: 100
+              });
+              lineGeometry.vertices.push(p1, p2);
+              line = new THREE.Line(lineGeometry, lineMat);
+              return line;
+          }
+      };
 
-      effect = new THREE.StereoEffect(renderer);
 
-      scene = new THREE.Scene();
+      var clock = new THREE.Clock();
 
-      camera = new THREE.PerspectiveCamera(90, 1, 0.001, 700);
-      camera.position.set(0, 10, 0);
-      scene.add(camera);
+      init();
+      animate();
 
-      controls = new THREE.OrbitControls(camera, element);
-      controls.rotateUp(Math.PI / 4);
-      controls.target.set(
-        camera.position.x + 0.1,
-        camera.position.y,
-        camera.position.z
-      );
-      controls.noZoom = true;
-      controls.noPan = true;
 
-      function setOrientationControls(e) {
-        if (!e.alpha) {
+      function init() {
+          renderer = new THREE.WebGLRenderer({antialias: true});
+          element = renderer.domElement;
+          container = document.getElementById('example');
+          container.appendChild(element);
+
+          effect = new THREE.StereoEffect(renderer);
+          //effect.separation = 50;
+
+          scene = new THREE.Scene();
+
+          camera = new THREE.PerspectiveCamera(90, 1, 0.001, 700);
+          camera.position.set(0, 10, 0);
+          scene.add(camera);
+
+          controls = new THREE.OrbitControls(camera, element);
+          controls.rotateUp(Math.PI / 4);
+          controls.rotateLeft(Math.PI / 4);
+          controls.target.set(camera.position.x + 0.1, camera.position.y+0.1, camera.position.z);
+          controls.noZoom = true;
+          controls.noPan = true;
+//          controls.autoRotate = true;
+//          controls.rotateSpeed = 2;
+         // debugger;
+          function setOrientationControls(e) {
+              if (!e.alpha) {
+                  return;
+              }
+
+              controls = new THREE.DeviceOrientationControls(camera, true);
+//              controls.autoForward = true;
+//              controls.movementSpeed = 10.0;
+//              controls.rollSpeed = 0.105;
+              controls.connect();
+              controls.update();
+              element.addEventListener('click', fullscreen, false);
+              window.removeEventListener('deviceorientation', setOrientationControls, true);
+          }
+
+          window.addEventListener('deviceorientation', setOrientationControls, true);
+
+          var light = new THREE.HemisphereLight(0xffffff, 0xeeeeee, 1.0);
+          scene.add(light);
+
+          renderer.setClearColor(new THREE.Color(0x555555, 1.0));
+         
+          //ground
+//          var texture = THREE.ImageUtils.loadTexture('textures/patterns/checker.png');
+//          texture.wrapS = THREE.RepeatWrapping;
+//          texture.wrapT = THREE.RepeatWrapping;
+//          texture.repeat = new THREE.Vector2(50, 50);
+//          texture.anisotropy = renderer.getMaxAnisotropy();
+//          var material = new THREE.MeshPhongMaterial({
+//              color: 0xffffff,
+//              specular: 0xffffff,
+//              shininess: 20,
+//              shading: THREE.FlatShading,
+//              map: texture
+//          });
+//          var geometry = new THREE.PlaneGeometry(1000, 1000);
+//          var mesh = new THREE.Mesh(geometry, material);
+//          mesh.rotation.x = -Math.PI / 2;
+//          scene.add(mesh);
+
+          //----plane
+
+          var r = 150 + 20 * imageAry.length;
+          var newpi = Math.PI/4;
+          planes = new THREE.Object3D();
+          for (var i=0; i< imageAry.length; i++){
+              var texture, plane;
+              texture = THREE.ImageUtils.loadTexture(imageAry[i]);
+              var imgMaterial = new THREE.MeshPhongMaterial({
+                  shading: THREE.FlatShading,
+                  map: texture
+              });
+              
+              var x = (0 + r * Math.cos(2 * newpi * i / imageAry.length));
+              var z = (0 + r * Math.sin(2 * newpi * i / imageAry.length));
+
+              plane = new THREE.Mesh(new THREE.PlaneGeometry(100, 80), imgMaterial);
+              plane.material.side = THREE.DoubleSide;
+              plane.position.x = x;
+              plane.position.z = z;
+              plane.position.y = (i%2) === 0 ? 50 : -50;
+              plane.name = "imagePlane";
+              plane.imageIndex = i;
+              plane.imageUrl = imageAry[i];
+              //plane.rotation.y =-Math.PI/2;
+              plane.rotation.y = -Math.PI / 2 - (i*newpi * 2 / imageAry.length);
+              planes.add(plane);
+          }
+          planes.rotation.y = -Math.PI / 4;
+          scene.add(planes);
+
+//          texture = THREE.ImageUtils.loadTexture('demoImgs/02.jpg');
+//          var imgMaterial = new THREE.MeshPhongMaterial({
+//              shading: THREE.FlatShading,
+//              map: texture
+//          });
+//
+//          plane = new THREE.Mesh(new THREE.PlaneGeometry(100, 80), imgMaterial);
+//          plane.material.side = THREE.DoubleSide;
+//          plane.position.x = 80;
+//          plane.position.z = -100;
+//          plane.rotation.y =  -Math.PI/2 + (Math.PI * 2 /20);
+//
+//
+//          scene.add(plane);
+
+                  
+          //----plane
+          //axix
+          if (DEBUG) {
+              var v = utils.v;
+              var axes = new THREE.Object3D();
+              var axesx = utils.createAxis(v(-10, 0, 0), v(100, 0, 0), 0xFF0000);
+              var axesy = utils.createAxis(v(0, -10, 0), v(0, 100, 0), 0x00FF00);
+              var axesz = utils.createAxis(v(0, 0, -10), v(0, 0, 100), 0x0000ff);
+              axes.add(axesx);
+              axes.add(axesy);
+              axes.add(axesz);
+              scene.add(axes);
+          }
+          
+          window.addEventListener('resize', resize, false);
+          setTimeout(resize, 1);
+
+          viewCenter.x = 0;
+          viewCenter.y = 0 ;
+
+//          var material = new THREE.SpriteMaterial( {
+//              map: THREE.ImageUtils.loadTexture("textures/cborder.png"),
+//              blending: THREE.AdditiveBlending
+//          } );
+//
+//          var particle = new THREE.Sprite( material );
+//          particle.position.set( 100, 0, 0 );
+//          scene.add( particle );
+//
+//
+//          var borderMaterial = new THREE.SpriteMaterial({
+//              map: THREE.ImageUtils.loadTexture("textures/cborder.png"),
+//              transparent: true,
+//              opacity: 1,
+//              useScreenCoordinates: false,
+//              color: 0x074CA6,
+//              depthTest: false,
+//              depthWrite: false
+//          });
+//          var particle = new THREE.Particle(borderMaterial);
+//
+//          var particleSystem = new THREE.ParticleSystem(
+//                  particles,
+//                  pMaterial);
+//          
+//          scene.add(particle);
+
+
+          raycaster = new THREE.Raycaster();
+
+      }
+
+      function resize() {
+          $("#mask").width(window.innerWidth);
+          $("#mask .ind").css("top", window.innerHeight/2);
+          $(".previewImg").width(window.innerWidth/2).height(window.innerHeight);
+          
+          var width = container.offsetWidth;
+          var height = container.offsetHeight;
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(width, height);
+          effect.setSize(width, height);
+      }
+
+      function update(dt) {
+          resize();
+
+          camera.updateProjectionMatrix();
+
+          controls.update(dt);
+      }
+
+  var delayFocusTimer;
+  var currentFocusObj = null;
+  var focusCounter = 0;
+  var isPreviewShown = false;
+  function setFocus(obj) {
+      
+      if(isPreviewShown === true) {
           return;
-        }
-
-        controls = new THREE.DeviceOrientationControls(camera, true);
-        controls.connect();
-        controls.update();
-
-        element.addEventListener('click', fullscreen, false);
-
-        window.removeEventListener('deviceorientation', setOrientationControls, true);
       }
-      window.addEventListener('deviceorientation', setOrientationControls, true);
-
-
-      var light = new THREE.HemisphereLight(0x777777, 0x000000, 0.6);
-      scene.add(light);
-
-      var texture = THREE.ImageUtils.loadTexture(
-        'textures/patterns/checker.png'
-      );
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat = new THREE.Vector2(50, 50);
-      texture.anisotropy = renderer.getMaxAnisotropy();
-
-      var material = new THREE.MeshPhongMaterial({
-        color: 0xffffff,
-        specular: 0xffffff,
-        shininess: 20,
-        shading: THREE.FlatShading,
-        map: texture
-      });
-
-      var geometry = new THREE.PlaneGeometry(1000, 1000);
-
-      var mesh = new THREE.Mesh(geometry, material);
-      mesh.rotation.x = -Math.PI / 2;
-      scene.add(mesh);
-
-      window.addEventListener('resize', resize, false);
-      setTimeout(resize, 1);
-    }
-
-    function resize() {
-      var width = container.offsetWidth;
-      var height = container.offsetHeight;
-
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-
-      renderer.setSize(width, height);
-      effect.setSize(width, height);
-    }
-
-    function update(dt) {
-      resize();
-
-      camera.updateProjectionMatrix();
-
-      controls.update(dt);
-    }
-
-    function render(dt) {
-      effect.render(scene, camera);
-    }
-
-    function animate(t) {
-      requestAnimationFrame(animate);
-
-      update(clock.getDelta());
-      render(clock.getDelta());
-    }
-
-    function fullscreen() {
-      if (container.requestFullscreen) {
-        container.requestFullscreen();
-      } else if (container.msRequestFullscreen) {
-        container.msRequestFullscreen();
-      } else if (container.mozRequestFullScreen) {
-        container.mozRequestFullScreen();
-      } else if (container.webkitRequestFullscreen) {
-        container.webkitRequestFullscreen();
+      
+      if (currentFocusObj === obj) {
+         focusCounter ++;
+      }else {
+          focusCounter = 0;
+          currentFocusObj = obj;
       }
-    }
-  </script>
-  </body>
-</html>
+      var val = 2- Math.floor(focusCounter /60);
+      $("#mask .timerVal").text(val+1);
+      
+      if(val === 0) {
+          $(".previewImg").css("backgroundImage", "url("+obj.imageUrl+")");
+          $(".previewImg").fadeIn();
+          isPreviewShown = true;
+//          setTimeout(function(){
+//              if (isPreviewShown) {
+//                  resetFocusCount();
+//              }
+//          }, 3000);
+      }
+  }
+
+  function resetFocusCount (){
+      //return;
+      focusCounter = 0;
+      currentFocusObj = null;
+      $(".previewImg").fadeOut();
+      isPreviewShown = false;
+      $("#mask .timerVal").text("");
+  }
+
+      function render(dt) {
+          //----
+          raycaster.setFromCamera( viewCenter, camera );
+          var allChild = planes.children;
+          var intersects = raycaster.intersectObjects(allChild);
+          var fuc = null;
+          for (var i = 0; i < allChild.length; i++) {
+              if (allChild[i] && allChild[i].name === "imagePlane") {
+                  if(intersects.length == 1 && intersects[0].object === allChild[i]){
+//                      allChild[i].position.y = 10;
+//                      delaySetFocus(allChild[i]);
+//                      //intersects[0].object
+                      allChild[i].scale.set( 1.2, 1.2, 1 );
+                      fuc = allChild[i];
+                      setFocus(allChild[i]);
+                  }else{
+                      allChild[i].scale.set( 1, 1, 1 );
+                  }
+              }
+          }
+          if (fuc === null){
+              resetFocusCount();
+          }
+          
+
+          //--
+
+          
+          effect.render(scene, camera);
+      }
+
+      function animate(t) {
+          requestAnimationFrame(animate);
+
+          update(clock.getDelta());
+          render(clock.getDelta());
+      }
+
+      function fullscreen() {
+          if (container.requestFullscreen) {
+              container.requestFullscreen();
+          } else if (container.msRequestFullscreen) {
+              container.msRequestFullscreen();
+          } else if (container.mozRequestFullScreen) {
+              container.mozRequestFullScreen();
+          } else if (container.webkitRequestFullscreen) {
+              container.webkitRequestFullscreen();
+          }
+      }
+      </script>
+    </body>
+    </html>
