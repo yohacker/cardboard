@@ -20,14 +20,15 @@
       
    #mask .col {
        position: relative;
-       width:50%; height: 100%;  display: inline-block white-space: normal;
+       width:50%; height: 100%;  display: inline-block; white-space: normal;
 
    }
 
   #mask .timerVal {
      position: absolute;
-      top: 5px;
-      left: 12px;
+      top: 3px;
+      left: 8px;
+      font-size: 12px;
   }
       
   #mask .previewImg{
@@ -44,20 +45,18 @@
   <div id="example"></div>
   <div id="mask" style=" position: absolute; top:0px; left:0px; white-space: nowrap; ">
       <div class="col">
-           <span class="ind" style="color: white; position: absolute; left:50%;">
-              <img src="textures/cborder.png"> 
+           <span class="ind" style="color: white; position: absolute;">
+              <img src="textures/cborder.png" style="width:22px; height: 22px;">
               <span class="timerVal"></span>
-
           </span>
           <div class="previewImg" style="position: absolute; left:0%;"></div>
       </div>
       <div class="col">
-          <span class="ind" style="color: white; position: absolute; left:150%;">
-              <img src="textures/cborder.png">
+          <span class="ind" style="color: white; position: absolute;">
+              <img src="textures/cborder.png" style="width:22px; height: 22px;">
               <span class="timerVal"> </span>
-
           </span>
-          <div class="previewImg" style="position: absolute; left:100%;" ></div>
+          <div class="previewImg" style="position: absolute; left:0%;" ></div>
       </div>
   </div>
   <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -67,10 +66,26 @@
   <script src="js/third-party/threejs/OrbitControls.js"></script>
 
   <script>
-  $("#mask").width(window.innerWidth);
-  $("#mask .ind").css("top", window.innerHeight/2);
-  $(".previewImg").width(window.innerWidth/2).height(window.innerHeight);
+  
+  function adjustMaskPos() {
+      $("#mask").width(window.innerWidth);
+      
+      $("#mask .ind").each(function(i, t){
+          var parentW = $(this).parents(".col").width();
+          var parentH = window.innerHeight/2;
+          //alert(parentH);
+          $(this).css("top", parentH/2 + 50);
+          
+          if(i == 0){
+              $(this).css("left", parentW/2 -26);
+          }else {
+              $(this).css("left", parentW/2);
+          }
+      });
+      $(".previewImg").width(window.innerWidth/2).height(window.innerHeight);
+  }
 
+  adjustMaskPos();
   var imageAry = ["demoImgs/01.jpg", "demoImgs/02.jpg", "demoImgs/03.jpg", "demoImgs/04.jpg", "demoImgs/05.jpg",
       "demoImgs/06.jpg", "demoImgs/07.jpg", "demoImgs/08.jpg", "demoImgs/09.jpg", "demoImgs/10.jpg"
   ];
@@ -269,10 +284,8 @@
       }
 
       function resize() {
-          $("#mask").width(window.innerWidth);
-          $("#mask .ind").css("top", window.innerHeight/2);
-          $(".previewImg").width(window.innerWidth/2).height(window.innerHeight);
-          
+
+          adjustMaskPos();
           var width = container.offsetWidth;
           var height = container.offsetHeight;
           camera.aspect = width / height;
