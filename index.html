@@ -38,6 +38,15 @@
      background-position: 50%;
      /*background-image: url(demoImgs/04.jpg);*/
   }
+  #cboard {
+      cursor: pointer;
+      position: absolute;
+      right: 4px;
+      top: 0px;
+      width: 75px;
+      height: 75px;
+      z-index: 1;
+  }
   </style>
 </head>
 <body>
@@ -58,6 +67,9 @@
           </span>
           <div class="previewImg" style="position: absolute; left:0%;" ></div>
       </div>
+  </div>
+  <div id="cboard">
+      <img src="http://puga.com.br/play/cardboard-oimo/images/cardboard-view.svg" class="view" alt="View Cardboard">
   </div>
   <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.js"></script>
