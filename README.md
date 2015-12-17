@@ -1,5 +1,8 @@
 # cardboard
 
+### preview:
+![Preview](preview2.gif)
+
 ### demo:
 * http://yohacker.github.io/cardboard/index.html
 
